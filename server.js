@@ -7,8 +7,10 @@ const session = require('express-session');
 const SequelizeStore = require('connect-session-sequelize')(session.Store); // Add this line
 const sequelize = require('./config/database');
 const userRoutes = require('./routes/user');
+const paymentRoutes = require('./routes/payment');
 const examRoutes = require('./routes/exam');
 const cors = require('cors');
+
 
 console.log('Starting the server...');
 
@@ -29,6 +31,7 @@ app.use(session(sessionConfig));
 console.log('Configuring routes...');
 app.use('/api/users', userRoutes);
 app.use('/api/exams', examRoutes);
+app.use('/api/payment', paymentRoutes);
 
 app.get('/', (req, res) => {
   res.send('Scholarship Exam API');
