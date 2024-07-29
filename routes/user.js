@@ -14,10 +14,34 @@ const generateApplicationNumber = (userID) =>  {
   return `DALGO/2024/${1000+ userID}`;
 };
 
-router.get('/pay', async(req, res) => {
-    res.send('Use user id and ammount to pay')
-});
+router.get('/pay', auth, async (req, res) => {
+  try {
+    const userId = req.session.userId;
+    if (!userId) {
+      return res.status(401).json({ message: 'Unauthorized' });
+    }
 
+    const user = await User.findByPk(userId);
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    const PaymentDetails = await Payment.findOne({ where: { userId } });
+    if (!PaymentDetails) {
+      return res.status(404).json({ message: 'NO payments already' });
+    }
+
+    res.json({
+      applicationNumber: payment.applicationNumber,
+      fullName: `${user.surname} ${user.firstname}`,
+      amount: payment.amount,
+      status: payment.status
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).send('Server error');
+  }
+});
 // Payment Route
 router.post('/pay', auth, async (req, res) => {
   const userId = req.session.userId;

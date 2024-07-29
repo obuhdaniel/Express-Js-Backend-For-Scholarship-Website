@@ -11,6 +11,8 @@ const paymentRoutes = require('./routes/payment');
 const examRoutes = require('./routes/exam');
 const cors = require('cors');
 const infoRoutes = require('./routes/info');
+const institutionDataRoutes = require('./routes/institution_details');
+const BankDetailsRoutes = require('./routes/bankDetails');
 
 
 console.log('Starting the server...');
@@ -40,6 +42,9 @@ app.use('/api/users', userRoutes);
 app.use('/api/exams', examRoutes);
 app.use('/api/payment', paymentRoutes);
 app.use('/api/users/info', infoRoutes);
+app.use('/api/users/institution-data', institutionDataRoutes);
+app.use('/api/users/bank', BankDetailsRoutes);
+
 
 app.get('/', (req, res) => {
   res.send('Scholarship Exam API');
