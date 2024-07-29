@@ -10,6 +10,7 @@ const userRoutes = require('./routes/user');
 const paymentRoutes = require('./routes/payment');
 const examRoutes = require('./routes/exam');
 const cors = require('cors');
+const infoRoutes = require('./routes/info');
 
 
 console.log('Starting the server...');
@@ -32,6 +33,7 @@ console.log('Configuring routes...');
 app.use('/api/users', userRoutes);
 app.use('/api/exams', examRoutes);
 app.use('/api/payment', paymentRoutes);
+app.use('/api/users/info', infoRoutes);
 
 app.get('/', (req, res) => {
   res.send('Scholarship Exam API');
