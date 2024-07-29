@@ -39,13 +39,9 @@ router.post('/pay', auth, async (req, res) => {
     if (existingPayment) {
         console.log('Application number already exists:', existingPayment);
         res.status(500).send("You have already initiated Payment transaction");
-        return;
+        return ;
     } else {
-        console.log('Application number does not exist.');
-        res.status(500).send("You have already initiated Payment transaction");
-    }
-   
-    // Create a new payment record
+        // Create a new payment record
     const payment = await Payment.create({
       applicationNumber,
       userId,
@@ -69,6 +65,9 @@ router.post('/pay', auth, async (req, res) => {
       message: 'Payment initiated successfully',
       paymentData
     });
+    }
+   
+    
   } catch (error) {
     console.error(error);
     res.status(500).send('Server error');

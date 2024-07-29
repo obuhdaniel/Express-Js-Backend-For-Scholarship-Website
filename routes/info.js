@@ -1,11 +1,13 @@
 const express = require('express');
+const fs = require('fs');
+const cloudinary = require('../config/cloudinaryConfig'); // Adjust path if necessary
 const User = require('../models/User');
 const Info = require('../models/Info');
 const Payment = require('../models/Payment');
 const router = express.Router();
 
 // Get User Info
-router.get('/:userId',  async (req, res) => {
+router.get('/:userId', async (req, res) => {
   const { userId } = req.params;
 
   try {
@@ -43,12 +45,32 @@ router.post('/:userId', async (req, res) => {
     phoneNumber,
     address,
     nin,
-    passportPhoto,
     stateOfOrigin,
-    lgaOfOrigin
+    lgaOfOrigin,
+    passportPhotoBase64
   } = req.body;
 
   try {
+    let passportPhotoUrl = null;
+
+    if (passportPhotoBase64) {
+      // Decode Base64 string and upload to Cloudinary
+      const buffer = Buffer.from(passportPhotoBase64, 'base64');
+      const result = await cloudinary.uploader.upload_stream({ resource_type: 'image' }, (error, result) => {
+        if (error) {
+          throw error;
+        }
+        passportPhotoUrl = result.secure_url;
+      });
+
+      // Create a readable stream from the buffer and upload to Cloudinary
+      const stream = require('stream');
+      const readableStream = new stream.PassThrough();
+      readableStream.end(buffer);
+      readableStream.pipe(result);
+    }
+
+    // Find or create the info record
     let info = await Info.findOne({ where: { userId } });
 
     if (info) {
@@ -58,7 +80,7 @@ router.post('/:userId', async (req, res) => {
       info.phoneNumber = phoneNumber;
       info.address = address;
       info.nin = nin;
-      info.passportPhoto = passportPhoto;
+      info.passportPhoto = passportPhotoUrl || info.passportPhoto; // Use new URL if available
       info.stateOfOrigin = stateOfOrigin;
       info.lgaOfOrigin = lgaOfOrigin;
       await info.save();
@@ -70,7 +92,7 @@ router.post('/:userId', async (req, res) => {
         phoneNumber,
         address,
         nin,
-        passportPhoto,
+        passportPhoto: passportPhotoUrl, // Set URL if available
         stateOfOrigin,
         lgaOfOrigin,
         userId

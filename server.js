@@ -33,6 +33,8 @@ app.use(session({
 }));
 
 
+
+
 console.log('Configuring routes...');
 app.use('/api/users', userRoutes);
 app.use('/api/exams', examRoutes);
