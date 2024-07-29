@@ -5,25 +5,22 @@ const User = require('../models/User');
 const Info = require('../models/Info');
 const Payment = require('../models/Payment');
 const router = express.Router();
+const auth = require('../middlewares/auth');
 
 // Get User Info
-router.get('/:userId', async (req, res) => {
-  const { userId } = req.params;
+router.get('/', auth, async (req, res) => {
+  const userId  = req.session.userId;
+  const apkno = `DALGO/2024/${1000+ userId}`;
 
   try {
-    const user = await User.findByPk(userId, {
-      include: [
-        { model: Info },
-        { model: Payment }
-      ]
-    });
+    const user = await User.findByPk(userId);
 
     if (!user) {
       return res.status(404).json({ message: 'User not found' });
     }
 
     const response = {
-      applicationNumber: user.Payment.applicationNumber,
+      applicationNumber: apkno,
       surname: user.surname,
       firstname: user.firstname,
       info: user.Info
@@ -37,8 +34,8 @@ router.get('/:userId', async (req, res) => {
 });
 
 // Create or Update User Info
-router.post('/:userId', async (req, res) => {
-  const { userId } = req.params;
+router.post('/', async (req, res) => {
+  const userId  = req.session.userId;
   const {
     middleName,
     dateOfBirth,
@@ -51,7 +48,7 @@ router.post('/:userId', async (req, res) => {
   } = req.body;
 
   try {
-    let passportPhotoUrl = null;
+    let passportPhotoUrl = 'https://res.cloudinary.com/dzxbpzkhs/image/upload/v1722258677/images_nhwvmg.png';
 
     if (passportPhotoBase64) {
       // Decode Base64 string and upload to Cloudinary
