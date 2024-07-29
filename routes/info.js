@@ -5,7 +5,7 @@ const Payment = require('../models/Payment');
 const router = express.Router();
 
 // Get User Info
-router.get('/:userId', async (req, res) => {
+router.get('/:userId',  async (req, res) => {
   const { userId } = req.params;
 
   try {

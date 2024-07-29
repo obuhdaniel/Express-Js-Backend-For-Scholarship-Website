@@ -20,14 +20,18 @@ app.use(bodyParser.json());
 app.use(cors({ origin: 'http://localhost:5173', credentials: true }));
 
 
-const sessionConfig = {
-  secret: 'your_secret_key', // Replace with a strong secret key
+app.use(session({
+  secret: 'your_secret_key',
+  store: new SequelizeStore({
+    db: sequelize,
+  }),
   resave: false,
-  saveUninitialized: true,
-  cookie: { secure: false }, // Set to true for https connections
-}
+  saveUninitialized: false,
+  cookie: {
+    maxAge: 1000 * 60 * 60 * 24 // 1 day
+  }
+}));
 
-app.use(session(sessionConfig));
 
 console.log('Configuring routes...');
 app.use('/api/users', userRoutes);

@@ -2,12 +2,12 @@ const express = require('express');
 const User = require('../models/User');
 
 const router = express.Router();
+const auth = require('../middlewares/auth');
 
 const Payment = require('../models/Payment');
-// Function to generate a unique application number
-let applicationNumberCounter = 1000;
-const generateApplicationNumber = () => {
-  return `DALGO/2024/${applicationNumberCounter++}`;
+
+const generateApplicationNumber = (userID) =>  {
+  return `DALGO/2024/${1000+ userID}`;
 };
 
 router.get('/pay', async(req, res) => {
@@ -15,8 +15,9 @@ router.get('/pay', async(req, res) => {
 });
 
 // Payment Route
-router.post('/pay', async (req, res) => {
-  const { userId, amount } = req.body;
+router.post('/pay', auth, async (req, res) => {
+  const userId = req.session.user;
+  const amount = '5000';
 
   try {
     // Fetch user information
@@ -26,8 +27,13 @@ router.post('/pay', async (req, res) => {
     }
 
     // Generate unique application number
-    const applicationNumber = generateApplicationNumber();
+    const applicationNumber = generateApplicationNumber(userId);
 
+
+    const apkno = await Payment.findByPk(applicationNumber);
+    if (apkno) {
+      return res.status(400).json({ message: 'Application number already exists' });
+    }
     // Create a new payment record
     const payment = await Payment.create({
       applicationNumber,
@@ -35,6 +41,8 @@ router.post('/pay', async (req, res) => {
       amount,
       status: 'pending'
     });
+
+
 
     // Prepare data for payment gateway
     const paymentData = {

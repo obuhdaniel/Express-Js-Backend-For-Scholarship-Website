@@ -1,11 +1,6 @@
-// middleware/auth.js
-const isAuthenticated = (req, res, next) => {
-    if (req.session.user) {
-      next();
-    } else {
-      res.status(401).json({ message: 'Unauthorized' });
-    }
-  };
-  
-  module.exports = isAuthenticated;
-  
+module.exports = (req, res, next) => {
+  if (!req.session.userId) {
+    return res.status(401).json({ message: 'Unauthorized' });
+  }
+  next();
+};

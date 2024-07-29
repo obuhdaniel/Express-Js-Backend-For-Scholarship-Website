@@ -5,13 +5,13 @@ const User = require('../models/User'); // Assuming you have a User model
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const Payment = require('../models/Payment');
+const auth = require('../middlewares/auth');
 
 
 
-// Function to generate a unique application number
-let applicationNumberCounter = 1000;
-const generateApplicationNumber = () => {
-  return `DALGO/2024/${applicationNumberCounter++}`;
+
+const generateApplicationNumber = (userID) =>  {
+  return `DALGO/2024/${1000+ userID}`;
 };
 
 router.get('/pay', async(req, res) => {
@@ -19,8 +19,9 @@ router.get('/pay', async(req, res) => {
 });
 
 // Payment Route
-router.post('/pay', async (req, res) => {
-  const { userId, amount } = req.body;
+router.post('/pay', auth, async (req, res) => {
+  const userId = req.session.userId;
+  const amount = '5000';
 
   try {
     // Fetch user information
@@ -30,8 +31,20 @@ router.post('/pay', async (req, res) => {
     }
 
     // Generate unique application number
-    const applicationNumber = generateApplicationNumber();
+    const applicationNumber = generateApplicationNumber(userId);
 
+    // Use findOne with a query object to search for the application number
+    const existingPayment = await Payment.findOne({ applicationNumber: applicationNumber });
+    
+    if (existingPayment) {
+        console.log('Application number already exists:', existingPayment);
+        res.status(500).send("You have already initiated Payment transaction");
+        return;
+    } else {
+        console.log('Application number does not exist.');
+        res.status(500).send("You have already initiated Payment transaction");
+    }
+   
     // Create a new payment record
     const payment = await Payment.create({
       applicationNumber,
@@ -39,6 +52,8 @@ router.post('/pay', async (req, res) => {
       amount,
       status: 'pending'
     });
+
+
 
     // Prepare data for payment gateway
     const paymentData = {
@@ -117,10 +132,25 @@ router.post('/login', async (req, res) => {
     const payload = { userId: user.id };
     const token = jwt.sign(payload, 'secret', { expiresIn: '1h' });
 
+    req.session.userId = user.id;
+    console.log(user.id);
+    req.session.email = user.email;
+
     res.json({ token });
   } catch (error) {
     console.error(error);
     res.status(500).send('Server error');
   }
+});
+
+router.post('/logout',  (req,res) => {
+  req.session.destroy(err => {
+    if (err) {
+      return res.status(500).send('Server error');
+    }
+
+    res.clearCookie('connect.sid');
+    res.json({ message: 'Logout successful' });
+  });
 });
 module.exports = router;
