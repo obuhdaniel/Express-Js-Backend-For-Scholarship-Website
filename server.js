@@ -13,6 +13,7 @@ const cors = require('cors');
 const infoRoutes = require('./routes/info');
 const institutionDataRoutes = require('./routes/institution_details');
 const BankDetailsRoutes = require('./routes/bankDetails');
+const AcknowledgementRoutes = require('./routes/acknowledgement');
 
 
 console.log('Starting the server...');
@@ -44,6 +45,7 @@ app.use('/api/payment', paymentRoutes);
 app.use('/api/users/info', infoRoutes);
 app.use('/api/users/institution-data', institutionDataRoutes);
 app.use('/api/users/bank', BankDetailsRoutes);
+app.use('/api/users/acknowledgement', AcknowledgementRoutes); // Add this line to include the acknowledgement route
 
 
 app.get('/', (req, res) => {
