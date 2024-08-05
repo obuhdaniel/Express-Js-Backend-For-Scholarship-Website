@@ -7,6 +7,11 @@ const jwt = require('jsonwebtoken');
 const Payment = require('../models/Payment');
 const auth = require('../middlewares/auth');
 
+const { sendWelcomeEmail } = require('../middlewares/emailsServices');
+
+
+require('dotenv').config();
+
 
 
 
@@ -106,6 +111,8 @@ router.get('/register', (req, res) => {
 router.post('/register', async (req, res) => {
   const { surname, firstname, email, password } = req.body;
 
+  
+
   if (!surname || !firstname || !email || !password) {
     return res.status(400).json({ message: 'Please provide all required fields: surname, firstname, email, and password' });
   }
@@ -124,6 +131,8 @@ router.post('/register', async (req, res) => {
     // Save user
     user = await User.create({ surname, firstname, email, password: hashedPassword });
 
+    // Send welcome email
+    await sendWelcomeEmail(user.email, user.firstname);
     res.status(201).json({ message: 'User registered successfully' });
   } catch (error) {
     console.error(error);
@@ -142,18 +151,27 @@ router.post('/login', async (req, res) => {
     // Check if user exists
     const user = await User.findOne({ where: { email } });
     if (!user) {
-      return res.status(400).json({ message: 'Invalid credentials' });
+      return res.status(400).json({ message: 'Seems You dont have an account' });
     }
 
     // Check password
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) {
-      return res.status(400).json({ message: 'Invalid credentials' });
+      return res.status(400).json({ message: 'Invalid Email or Password' });
     }
 
     // Generate JWT
     const payload = { userId: user.id };
-    const token = jwt.sign(payload, 'secret', { expiresIn: '1h' });
+
+    const token = jwt.sign(
+      {
+        sub: user.id,
+        email: user.email,
+        name: user.surname
+      },
+      process.env.JWT_SECRET,
+      { expiresIn: process.env.JWT_EXPIRY}
+    );
 
     req.session.userId = user.id;
     console.log(user.id);
