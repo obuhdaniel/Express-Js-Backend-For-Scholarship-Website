@@ -33,7 +33,9 @@ const auth2 = (req, res, next) => {
 
 router.get('/pay', auth2, async (req, res) => {
   try {
-    const userId = req.user.sub; // Access user ID from the JWT token
+    const userId = req.user.sub; 
+    
+    const userEmail = req.user.email;
 
     // Find the user by ID
     const user = await User.findByPk(userId);
@@ -59,6 +61,7 @@ router.get('/pay', auth2, async (req, res) => {
           fullName: `${user.surname} ${user.firstname}`,
           amount: existingPayment.amount,
           status: existingPayment.status,
+          email: userEmail,
         },
       });
     }

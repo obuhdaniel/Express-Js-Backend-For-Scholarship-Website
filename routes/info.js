@@ -7,35 +7,27 @@ const Payment = require('../models/Payment');
 const router = express.Router();
 const auth = require('../middlewares/auth');
 
-// Get User Info
-router.get('/', auth, async (req, res) => {
-  const userId  = req.session.userId;
-  const apkno = `DALGO/2024/${1000+ userId}`;
+const multer = require('multer');
 
-  try {
-    const user = await User.findByPk(userId);
-
-    if (!user) {
-      return res.status(404).json({ message: 'User not found' });
+const upload = multer({
+  dest: 'uploads/', // Directory to save the uploaded files
+  limits: { fileSize: 0.5 * 1024 * 1024 }, // Limit file size to 5MB
+  fileFilter(req, file, cb) {
+    if (!file.mimetype.startsWith('image/')) {
+      return cb(new Error('Please upload an image.'));
     }
-
-    const response = {
-      applicationNumber: apkno,
-      surname: user.surname,
-      firstname: user.firstname,
-      info: user.Info
-    };
-
-    res.json(response);
-  } catch (error) {
-    console.error(error);
-    res.status(500).send('Server error');
+    cb(null, true);
   }
 });
 
+if (!fs.existsSync('uploads')){
+  fs.mkdirSync('uploads');
+
+
+}
 // Create or Update User Info
-router.post('/', async (req, res) => {
-  const userId  = req.session.userId;
+router.post('/', upload.single('passportPhoto'), auth, async (req, res) => {
+  const userId = req.user.sub; 
   const {
     middleName,
     dateOfBirth,
@@ -43,28 +35,15 @@ router.post('/', async (req, res) => {
     address,
     nin,
     stateOfOrigin,
-    lgaOfOrigin,
-    passportPhotoBase64
+    lgaOfOrigin
   } = req.body;
 
   try {
-    let passportPhotoUrl = 'https://res.cloudinary.com/dzxbpzkhs/image/upload/v1722258677/images_nhwvmg.png';
+    let passportPhotoUrl = '';
 
-    if (passportPhotoBase64) {
-      // Decode Base64 string and upload to Cloudinary
-      const buffer = Buffer.from(passportPhotoBase64, 'base64');
-      const result = await cloudinary.uploader.upload_stream({ resource_type: 'image' }, (error, result) => {
-        if (error) {
-          throw error;
-        }
-        passportPhotoUrl = result.secure_url;
-      });
-
-      // Create a readable stream from the buffer and upload to Cloudinary
-      const stream = require('stream');
-      const readableStream = new stream.PassThrough();
-      readableStream.end(buffer);
-      readableStream.pipe(result);
+    if (req.file) {
+      // File uploaded successfully
+      passportPhotoUrl = `/uploads/${req.file.filename}`;
     }
 
     // Find or create the info record

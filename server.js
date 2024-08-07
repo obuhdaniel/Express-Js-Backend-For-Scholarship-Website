@@ -21,7 +21,7 @@ console.log('Starting the server...');
 const app = express();
 app.use(bodyParser.json());
 app.use(cors({ origin: 'http://localhost:5173', credentials: true }));
-
+app.use('/uploads', express.static('uploads'));
 
 app.use(session({
   secret: 'your_secret_key',
