@@ -21,7 +21,24 @@ console.log('Starting the server...');
 
 const app = express();
 app.use(bodyParser.json());
-app.use(cors({ origin: 'http://localhost:5173', credentials: true }));
+const allowedOrigins = [
+  'http://localhost:5173',
+  'http://example.com',
+  'https://thealgorithm.onrender.com/',
+  '*',
+];
+
+app.use(cors({
+  origin: function(origin, callback) {
+    // Allow requests with no origin (e.g., mobile apps, Postman)
+    if (!origin || allowedOrigins.indexOf(origin) !== -1) {
+      return callback(null, true);
+    }
+    return callback(new Error('Not allowed by CORS'));
+  },
+  credentials: true
+}));
+
 app.use('/uploads', express.static('uploads'));
 
 app.use(session({
