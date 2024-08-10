@@ -14,6 +14,7 @@ const infoRoutes = require('./routes/info');
 const institutionDataRoutes = require('./routes/institution_details');
 const BankDetailsRoutes = require('./routes/bankDetails');
 const AcknowledgementRoutes = require('./routes/acknowledgement');
+const path = require('path')
 
 
 console.log('Starting the server...');
@@ -48,9 +49,37 @@ app.use('/api/users/bank', BankDetailsRoutes);
 app.use('/api/users/acknowledgement', AcknowledgementRoutes); // Add this line to include the acknowledgement route
 
 
-app.get('/', (req, res) => {
-  res.send('Scholarship Exam API');
+
+
+
+// INTEGRATING FRONTEND ON SAME SERVER
+
+app.use(express.static(path.join(__dirname, './dist')));
+
+// Serve the index.html file for all other requests
+app.get('*', (req, res) => {
+  res.sendFile(path.join(__dirname, './dist', 'index.html'));
 });
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 const PORT = process.env.PORT || 3001;
 

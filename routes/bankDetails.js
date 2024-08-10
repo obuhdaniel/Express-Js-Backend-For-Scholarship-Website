@@ -41,7 +41,7 @@ router.post('/', auth, async (req, res) => {
   } = req.body;
 
   try {
-    const userId = req.session.userId;
+    const userId = req.user.sub;
     if (!userId) {
       return res.status(401).json({ message: 'Unauthorized' });
     }

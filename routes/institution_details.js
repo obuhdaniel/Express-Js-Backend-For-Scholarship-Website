@@ -25,6 +25,8 @@ router.get('/', auth,  async (req, res) => {
 
 // Create or Update Institutional Details
 router.post('/', auth, async (req, res) => {
+
+  const userId = req.user.sub;
   const {
     institutionName,
     faculty,
@@ -40,7 +42,7 @@ router.post('/', auth, async (req, res) => {
   } = req.body;
 
   try {
-    const userId = req.session.userId;
+    
     if (!userId) {
       return res.status(401).json({ message: 'Unauthorized' });
     }

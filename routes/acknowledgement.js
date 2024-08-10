@@ -8,11 +8,12 @@ const router = express.Router();
 const PDFDocument = require('pdfkit');
 const fs = require('fs');
 const path = require('path');
+const auth = require('../middlewares/auth');
 
 // Check if all details are filled
-router.get('/', async (req, res) => {
+router.get('/', auth, async (req, res) => {
   try {
-    const userId = req.session.userId;
+    const userId = req.user.sub;
     if (!userId) {
       return res.status(401).json({ message: 'Unauthorized' });
     }
@@ -36,6 +37,7 @@ router.get('/', async (req, res) => {
     };
 
     res.json(allDetails);
+    res.json({allDetails})
   } catch (error) {
     console.error(error);
     res.status(500).send('Server error');
