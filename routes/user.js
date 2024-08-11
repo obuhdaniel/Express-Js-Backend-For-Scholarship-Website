@@ -90,9 +90,15 @@ router.get('/pay', auth2, async (req, res) => {
       status: payment.status,
     };
 
-    // TODO: Integrate with payment gateway here
-    // For example, you might need to send `paymentData` to an external payment service
+    // Integrate with Paystack
+    const paystackResponse = await axios.post('https://api.paystack.co/transaction/initialize', paystackData, {
+      headers: {
+        Authorization: `Bearer YOUR_PAYSTACK_SECRET_KEY`,
+        'Content-Type': 'application/json',
+      },
+    });
 
+    const { authorization_url } = paystackResponse.data.data;
     res.status(201).json({
       message: 'Payment initiated successfully',
       paymentData,
