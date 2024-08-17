@@ -6,6 +6,7 @@ const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const Payment = require("../models/Payment");
 const auth = require("../middlewares/auth");
+const UserPaymentReference = require("../models/UserPaymentReference")
 
 const { sendWelcomeEmail } = require("../middlewares/emailsServices");
 
@@ -67,7 +68,7 @@ router.get('/pay', auth2, async (req, res) => {
     }
 
     // Extract amount from request body or set a default
-    const { amount = '3500' } = req.body;
+    const { amount = '150000' } = req.body;
 
     // Validate amount (ensure it's a number and positive)
     if (isNaN(amount) || parseFloat(amount) <= 0) {
@@ -88,6 +89,7 @@ router.get('/pay', auth2, async (req, res) => {
       fullName: `${user.surname} ${user.firstname}`,
       amount: payment.amount,
       status: payment.status,
+      email: userEmail,
     };
 
     // TODO: Integrate with payment gateway here
@@ -104,90 +106,70 @@ router.get('/pay', auth2, async (req, res) => {
 });
 
 
-router.post('/initiate-payment', auth2, async (req, res) => {
+router.post('/update-payment-status', auth2, async (req, res) => {
   try {
-    const userId = req.user.sub;
-    const { amount } = req.body; // Ensure amount is provided
+    // Extract userId and referenceNumber from request body
+    const { userId, referenceNumber } = req.body;
 
-    const user = await User.findByPk(userId);
-    if (!user) {
-      return res.status(404).json({ message: 'User not found' });
+    // Validate input
+    if (!userId || !referenceNumber) {
+      return res.status(400).json({ message: 'User ID and reference number are required' });
     }
 
-    const applicationNumber = generateApplicationNumber(userId);
-
-    // Create a new payment record
-    const payment = await Payment.create({
-      applicationNumber,
-      userId,
-      amount,
-      status: 'pending', // Initial status
+    // Find the UserPaymentReference record
+    let userPaymentReference = await UserPaymentReference.findOne({
+      where: {
+        userId,
+        referenceNumber,
+      },
     });
 
-    // Prepare data for payment gateway
-    const paymentGatewayUrl = `https://paymentgateway.com/pay?amount=${payment.amount}&applicationNumber=${payment.applicationNumber}&callbackUrl=${encodeURIComponent('http://yourdomain.com/payment-callback')}`;
+    if (!userPaymentReference) {
+      // Create a new UserPaymentReference record if not found
+      userPaymentReference = await UserPaymentReference.create({
+        userId,
+        referenceNumber,
+      });
 
-    res.redirect(paymentGatewayUrl);
+      console.log('New UserPaymentReference created:', userPaymentReference);
+    }
+
+
+    // Generate the application number based on userId
+    const applicationNumber = generateApplicationNumber(userId);
+
+    // Find the payment record using userId and applicationNumber
+    const payment = await Payment.findOne({
+      where: {
+        userId,
+        applicationNumber,
+      },
+    });
+
+    if (!payment) {
+      return res.status(404).json({ message: 'Payment not found' });
+    }
+
+    // Update payment status to 'success'
+    payment.status = 'success';
+    await payment.save();
+
+    // Respond with success message
+    res.status(200).json({
+      message: 'Payment status updated to success',
+      paymentData: {
+        applicationNumber: payment.applicationNumber,
+        userId: payment.userId,
+        amount: payment.amount,
+        status: payment.status,
+      },
+    });
   } catch (error) {
-    console.error(error);
+    console.error('Error updating payment status:', error);
     res.status(500).json({ message: 'Server error' });
   }
 });
 
-// Payment Route
-router.post("/pay", auth, async (req, res) => {
-  const userId = req.session.userId;
-  const amount = "5000";
-
-  try {
-    // Fetch user information
-    const user = await User.findByPk(userId);
-    if (!user) {
-      return res.status(404).json({ message: "User not found" });
-    }
-
-    // Generate unique application number
-    const applicationNumber = generateApplicationNumber(userId);
-
-    // Use findOne with a query object to search for the application number
-    const existingPayment = await Payment.findOne({
-      applicationNumber: applicationNumber,
-    });
-
-    if (existingPayment) {
-      console.log("Application number already exists:", existingPayment);
-      res.status(500).send("You have already initiated Payment transaction");
-      res.json(existingPayment);
-      return;
-    } else {
-      // Create a new payment record
-      const payment = await Payment.create({
-        applicationNumber,
-        userId,
-        amount,
-        status: "pending",
-      });
-
-      // Prepare data for payment gateway
-      const paymentData = {
-        applicationNumber: payment.applicationNumber,
-        fullName: `${user.surname} ${user.firstname}`,
-        amount: payment.amount,
-        status: payment.status,
-      };
-
-      // TODO: Integrate with payment gateway here
-
-      res.status(201).json({
-        message: "Payment initiated successfully",
-        paymentData,
-      });
-    }
-  } catch (error) {
-    console.error(error);
-    res.status(500).send("Server error");
-  }
-});
 
 // Login route
 router.get("/register", (req, res) => {

@@ -14,7 +14,9 @@ const infoRoutes = require('./routes/info');
 const institutionDataRoutes = require('./routes/institution_details');
 const BankDetailsRoutes = require('./routes/bankDetails');
 const AcknowledgementRoutes = require('./routes/acknowledgement');
-const path = require('path')
+const path = require('path');
+const UserPaymentReference = require('./models/UserPaymentReference'); // Import your model
+
 
 
 console.log('Starting the server...');
@@ -101,6 +103,8 @@ app.get('*', (req, res) => {
 const PORT = process.env.PORT || 3001;
 
 console.log('Syncing database...');
+
+
 sequelize.sync().then(() => {
   app.listen(PORT, () => {
     console.log(`Server is running on port ${PORT}`);
